@@ -1,3 +1,8 @@
+var MyGame = {};
+
+MyGame.Boot = function() {};
+
+MyGame.Boot.prototype.constructor = MyGame.Boot;
 var config = {
     type: Phaser.AUTO,
     parent: 'phaser-example',
@@ -16,12 +21,9 @@ var config = {
         update: update,
         extend: {
             player: null,
-            healthpoints: null,
             reticle: null,
-            moveKeys: null,
             playerBullets: null,
-            enemyBullets: null,
-            time: 0,
+
         }
     }
 };
@@ -38,7 +40,7 @@ var Bullet = new Phaser.Class({
     // Bullet Constructor
         function Bullet(scene) {
         Phaser.GameObjects.Image.call(this, scene, 0, 0, 'bullet');
-        this.speed = 2.5;
+        this.speed = 3;
         this.born = 0;
         this.direction = 0;
         this.xSpeed = 0;
@@ -82,23 +84,74 @@ var Bullet = new Phaser.Class({
 var fallingAsteroid;
 var score = 0;
 var scoreText;
+var endScore = score;
+var endScoreText;
 var life = 100;
 var lifeText;
 var shield = 100;
 var shieldText;
 
+
 function preload() {
+
     // Load in images and sprites
-    this.load.spritesheet('player', 'assets/images/tank.png', { frameWidth: 66, frameHeight: 60 }); // Made by tokkatrain: https://tokkatrain.itch.io/top-down-basic-set
+    this.load.image('player', 'assets/images/tank.png', { frameWidth: 66, frameHeight: 60 });
     this.load.image('bullet', 'assets/images/bullet6.png');
     this.load.image('asteroid', 'assets/images/asteroid.png');
     this.load.image('city', 'assets/images/city.png');
+    this.load.image('city75', 'assets/images/city75.png');
+    this.load.image('city50', 'assets/images/city50.png');
+    this.load.image('city25', 'assets/images/city25.png');
+    this.load.image('city0', 'assets/images/city0.png');
+
+
+
     this.load.image('target', 'assets/images/ball.png');
-    this.load.image('background', 'assets/images/underwater1.png');
-    this.load.spritesheet('shieldRecharge', 'assets/images/tank.png', { frameWidth: 66, frameHeight: 60 }); // Made by tokkatrain: https://tokkatrain.itch.io/top-down-basic-set
+
+    this.load.image('background', 'assets/images/bg.png');
+    this.load.image('bg25', 'assets/images/bg25.png');
+    this.load.image('bg50', 'assets/images/bg50.png');
+    this.load.image('bg75', 'assets/images/bg75.png');
+    this.load.image('bg100', 'assets/images/bg100.png');
+
+
+
+
+    this.load.image('topBar', 'assets/images/topBar.png');
+
+    this.load.image('blueBar', 'assets/images/blueBar.png');
+
+    this.load.image('redBar', 'assets/images/redBar.png');
+
+    this.load.image('platform', 'assets/images/platform.png');
+
+    this.load.spritesheet('shieldRecharge', 'assets/images/shield.png', { frameWidth: 66, frameHeight: 60 });
+
+    this.load.image('title', 'assets/images/title.png');
+
+    this.load.image('gameOver', 'assets/images/gameOver.png');
+
+    this.load.audio('bgm', [
+        'assets/music/soundtrack.ogg'
+    ]);
+
+    this.load.audio('shoot', [
+        'assets/music/shoot.ogg'
+    ]);
+
+    this.load.audio('explosion', [
+        'assets/music/explosion.ogg'
+    ]);
 }
 
 function create() {
+
+    this.shoot = this.sound.add("shoot");
+
+    this.bgm = this.sound.add("bgm");
+    this.bgm.play();
+    this.bgm.loop = true;
+
     // Set world bounds
     this.physics.world.setBounds(0, 0, 1080, 600);
 
@@ -107,25 +160,40 @@ function create() {
     enemyBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
 
     // Add background player, enemy, reticle, healthpoint sprites
-    var background = this.add.image(config.width / 2, config.height / 2, 'background');
-    city = this.add.image(config.width / 2, config.height / 2, 'city');
-    player = this.physics.add.sprite(540, 570, 'player');
-    shieldRecharge = this.physics.add.sprite(-1000, 100, 'shieldRecharge');
-    enemy = this.physics.add.sprite(100, -100, 'asteroid').setScale(.2);
-    enemy2 = this.physics.add.sprite(200, -200, 'asteroid').setScale(.2);
-    enemy3 = this.physics.add.sprite(500, -300, 'asteroid').setScale(.2);
-    enemy4 = this.physics.add.sprite(900, -400, 'asteroid').setScale(.2);
-    enemy5 = this.physics.add.sprite(600, -500, 'asteroid').setScale(.2);
+    background = this.add.image(config.width / 2, config.height / 2, 'background');
+    city = this.add.image(config.width / 2, 560, 'city');
+    player = this.physics.add.sprite(540, 580, 'player').setScale(1.5);
+    platform = this.physics.add.sprite(540, 595, 'platform').setScale(1.5);
 
+    title = this.physics.add.sprite(config.width / 2, -200, 'title');
+    gameOver = this.physics.add.sprite(config.width / 2, 800, 'gameOver');
 
+    endScoreText = this.add.text(config.width / 2 + 10, 935, score, {
+        fontSize: '30px',
+        fill: '#ffffff'
+    });
+
+    shieldRecharge = this.physics.add.sprite(-3500, 100, 'shieldRecharge').setScale(2);
+
+    enemy = this.physics.add.sprite(100, -3000, 'asteroid').setScale(.2);
+    enemy2 = this.physics.add.sprite(200, -3200, 'asteroid').setScale(.2);
+    enemy3 = this.physics.add.sprite(500, -3300, 'asteroid').setScale(.2);
+    enemy4 = this.physics.add.sprite(900, -3400, 'asteroid').setScale(.2);
+    enemy5 = this.physics.add.sprite(600, -3500, 'asteroid').setScale(.2);
+
+    tBar = this.physics.add.sprite(540, 15, 'topBar');
+
+    bBar1 = this.physics.add.sprite(180, 15, 'blueBar');
+    bBar2 = this.physics.add.sprite(220, 15, 'blueBar');
+    bBar3 = this.physics.add.sprite(260, 15, 'blueBar');
+    bBar4 = this.physics.add.sprite(300, 15, 'blueBar');
+
+    rBar1 = this.physics.add.sprite(665, 15, 'redBar');
+    rBar2 = this.physics.add.sprite(705, 15, 'redBar');
+    rBar3 = this.physics.add.sprite(745, 15, 'redBar');
+    rBar4 = this.physics.add.sprite(785, 15, 'redBar');
 
     reticle = this.physics.add.sprite(540, 300, 'target');
-    hp1 = this.add.image(-350, -250, 'target').setScrollFactor(0.5, 0.5);
-    hp2 = this.add.image(-300, -250, 'target').setScrollFactor(0.5, 0.5);
-    hp3 = this.add.image(-250, -250, 'target').setScrollFactor(0.5, 0.5);
-
-    // asteroid = this.physics.add.sprite(config.width / 2 - 50, config.height / 2, "asteroid").setScale(.2);
-    // asteroid2 = this.physics.add.sprite(config.width / 2 - 50, config.height / 2, "asteroid2").setScale(.2);
 
     this.fallingAsteroid = this.physics.add.group();
     this.fallingAsteroid.add(enemy);
@@ -133,37 +201,24 @@ function create() {
     this.fallingAsteroid.add(enemy3);
     this.fallingAsteroid.add(enemy4);
     this.fallingAsteroid.add(enemy5);
-    //  fallingAsteroid.add(enemy);
-    // fallingAsteroid.add(asteroid);
-
 
     // Set image/sprite properties
     background.setDisplaySize(1080, 600);
-    reticle.setOrigin(0.5, 0.5).setDisplaySize(25, 25).setCollideWorldBounds(true);
-    hp1.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
-    hp2.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
-    hp3.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
+    reticle.setOrigin(0.5, 0.5).setDisplaySize(10, 10).setCollideWorldBounds(true);
+
 
     // Set sprite variables
     player.health = 3;
-
-
-
-
-
-    //this.physics.add.collider(city, bullet, cityHit, null, this);
-
-
 
     this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
     this.input.keyboard.on('keydown_SPACE', function(pointer, time, lastFired) {
         var bullet = playerBullets.get().setActive(true).setVisible(true);
-        bullet.fire(player, reticle);
 
         if (bullet) {
             bullet.fire(player, reticle);
-            //  this.physics.add.collider(fallingAsteroid, bullet, enemyHitCallback);
+            this.shoot.play();
+
             this.physics.add.collider(this.fallingAsteroid, bullet, hitEnemy);
             this.physics.add.collider(shieldRecharge, bullet, hitRecharger);
         }
@@ -190,18 +245,18 @@ function create() {
     }, this);
 
 
-    scoreText = this.add.text(20, 20, 'Score:' + score, {
+    scoreText = this.add.text(990, 7, score, {
         fontSize: '20px',
         fill: '#ffffff'
     });
 
 
-    lifeText = this.add.text(20, 80, 'City Life:' + life + '%', {
+    lifeText = this.add.text(585, 7, life + '%', {
         fontSize: '20px',
         fill: '#ffffff'
     });
 
-    shieldText = this.add.text(20, 50, 'Shield Integrity:' + shield + '%', {
+    shieldText = this.add.text(100, 7, shield + '%', {
         fontSize: '20px',
         fill: '#ffffff'
     });
@@ -209,10 +264,102 @@ function create() {
 
 
 function update(time, delta, stars) {
+    enemy.angle += 1;
+    enemy2.angle += 1.2;
+    enemy3.angle += 1.4;
+    enemy4.angle += 1.6;
+    enemy5.angle += 1.8;
+
+    title.y += 1;
+    if (shield < 75 && shield > 50) {
+        bBar4.setVisible(false);
+        city.setTexture('city75');
+    } else
+    if (shield > 75) {
+        bBar4.setVisible(true);
+    }
+
+    if (shield < 50 && shield > 25) {
+        bBar3.setVisible(false);
+        city.setTexture('city50');
+    } else if (shield > 50) {
+        bBar3.setVisible(true);
+    }
+
+    if (shield < 25 && shield > 0) {
+        bBar2.setVisible(false);
+        city.setTexture('city25');
+    } else if (shield > 25) {
+        bBar2.setVisible(true);
+    }
+
+    if (shield == 0) {
+        bBar1.setVisible(false);
+        city.setTexture('city0');
+    } else if (shield > 0) {
+        bBar1.setVisible(true);
+    }
 
 
-    if (life == 00) {
-        alert('Game Over')
+    if (life < 75 && life > 50) {
+        rBar4.setVisible(false);
+        background.setTexture('bg25');
+    } else if (shield > 75) {
+        rBar4.setVisible(true);
+    }
+
+    if (life < 50 && life > 25) {
+        rBar3.setVisible(false);
+        background.setTexture('bg50');
+    } else if (shield > 50) {
+        rBar3.setVisible(true);
+    }
+
+    if (life < 25 && life > 0) {
+        rBar2.setVisible(false);
+        background.setTexture('bg75');
+    } else if (shield > 25) {
+        rBar2.setVisible(true);
+    }
+
+    if (life == 0) {
+        rBar1.setVisible(false);
+        background.setTexture('bg100');
+    } else if (shield > 0) {
+        rBar1.setVisible(true);
+    }
+
+
+
+
+
+
+
+    if (life <= 0) {
+        life = 0;
+        shield = 0;
+
+        enemy.y = -1000000;
+        enemy2.y = -100000;
+        enemy3.y = -100000;
+        enemy4.y = -100000;
+        enemy5.y = -100000;
+
+        // shieldRecharge.setActive(false);
+        shieldRecharge.x = -1000000;
+
+        shieldRecharge.y = -1000000;
+
+        endScoreText.y -= 1;
+        gameOver.y -= 1;
+        if (gameOver.y == config.height / 2) {
+            //  this.bgm.stop();
+            endScoreText.y += 2;
+            gameOver.y += 2;
+            //   this.scene.stop();
+        }
+
+        //alert('Game Over')
     }
     speeder = 1 + (1 * (1 * (time / 1000 / 30)));
     //console.log(speeder)
@@ -224,7 +371,7 @@ function update(time, delta, stars) {
     moveShip(enemy4, speeder);
     moveShip(enemy5, 0);
 
-    moveRecharger(shieldRecharge, 1);
+    moveRecharger(shieldRecharge, 1.5);
 
     //moveShip(enemy, 2);
 
@@ -251,13 +398,13 @@ function moveShip(ship, speed) {
         } else if (shield <= 0) {
             life -= 2;
         }
-        lifeText.setText('City life:' + life + '%');
-        shieldText.setText('Shield Integrity:' + shield + '%');
-        this.resetShipPos(ship);
+        lifeText.setText(life + '%');
+        shieldText.setText(shield + '%');
+        this.resetAsterPos(ship);
     }
 }
 
-function resetShipPos(ship) {
+function resetAsterPos(ship) {
     // console.log('new');
     var randomY = Phaser.Math.Between(0, config.height - 700);
     ship.y = randomY;
@@ -265,19 +412,24 @@ function resetShipPos(ship) {
     ship.x = randomX;
 }
 
+
 function hitEnemy(bulletHit, enemy) {
-    bulletHit.destroy()
+    // if (bulletHit.y > 1080 || bulletHit.y < 0 || bulletHit.x > 800 || bulletHit.x < 0) {
+    //     console.log('destroy')
+    //     bulletHit.destroy();
+    // }
+    bulletHit.destroy();
     score += 1;
-    scoreText.setText('Score:' + score);
-    resetShipPos(enemy);
+    scoreText.setText(score);
+    endScoreText.setText(score);
+    resetAsterPos(enemy);
 }
 
 //////////////////////////
 
-function moveRecharger(recharger, speed) {
+function moveRecharger(recharger, speed, sound) {
     recharger.x += speed;
-    if (recharger.y > config.height - 40) {
-        //  console.log('new recharge')
+    if (recharger.x > config.width - 40) {
         resetRechargerPos(recharger);
     }
 }
@@ -286,13 +438,18 @@ function moveRecharger(recharger, speed) {
 function resetRechargerPos(recharger) {
     console.log('new recharge')
 
-    recharger.x = -1000;
-    var randomY = Phaser.Math.Between(50, config.height - 50);
+    recharger.x = -500;
+    var randomY = Phaser.Math.Between(100, 200);
     recharger.y = randomY;
 }
 
 
 function hitRecharger(charger, bulletHit) {
+    // if (bulletHit.y > 1080 || bulletHit.y < 0 || bulletHit.x > 800 || bulletHit.x < 0) {
+    //     console.log('destroy')
+    //     bulletHit.destroy();
+    // }
+
     bulletHit.destroy()
 
     if (shield < 100)(
@@ -302,10 +459,7 @@ function hitRecharger(charger, bulletHit) {
     if (shield > 100) {
         shield = 100;
     }
-
-
-
-    shieldText.setText('Shield Integrity:' + shield + '%');
+    shieldText.setText(shield + '%');
     console.log('hit');
     resetRechargerPos(charger);
 }
