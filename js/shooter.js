@@ -324,12 +324,6 @@ function update(time, delta, stars) {
         rBar1.setVisible(true);
     }
 
-
-
-
-
-
-
     if (life <= 0) {
         life = 0;
         shield = 0;
@@ -360,34 +354,33 @@ function update(time, delta, stars) {
     console.log(speeder)
         // Rotates player to face towards reticle
     player.rotation = Phaser.Math.Angle.Between(player.x, player.y, reticle.x, reticle.y);
-    moveShip(enemy, speeder);
-    moveShip(enemy2, speeder);
-    moveShip(enemy3, speeder);
-    moveShip(enemy4, speeder);
-    moveShip(enemy5, 0);
+    moveAster(enemy, speeder);
+    moveAster(enemy2, speeder);
+    moveAster(enemy3, speeder);
+    moveAster(enemy4, speeder);
+    moveAster(enemy5, 0);
 
     moveRecharger(shieldRecharge, 1.5);
 
-    //moveShip(enemy, 2);
+    //moveAster(enemy, 2);
 
     //Make reticle move with player
     reticle.body.velocity.x = player.body.velocity.x;
     reticle.body.velocity.y = player.body.velocity.y;
 
     // Constrain velocity of player
-    constrainVelocity(player, 500);
+    consVelocity(player, 500);
 
-    // Constrain position of constrainReticle
-    constrainReticle(reticle);
+    // Constrain position of consReticle
+    consReticle(reticle);
 
 }
 
-
-
 ///////
-function moveShip(ship, speed) {
-    ship.y += speed;
-    if (ship.y > config.height - 40) {
+
+function moveAster(aster, speed) {
+    aster.y += speed;
+    if (aster.y > config.height - 40) {
         if (shield > 0) {
             shield -= 2;
         } else if (shield <= 0) {
@@ -395,24 +388,21 @@ function moveShip(ship, speed) {
         }
         lifeText.setText(life + '%');
         shieldText.setText(shield + '%');
-        this.resetAsterPos(ship);
+        this.resetAsterPos(aster);
     }
 }
 
-function resetAsterPos(ship) {
+function resetAsterPos(aster) {
     // console.log('new');
     var randomY = Phaser.Math.Between(0, config.height - 700);
-    ship.y = randomY;
+    aster.y = randomY;
     var randomX = Phaser.Math.Between(50, config.width - 50);
-    ship.x = randomX;
+    aster.x = randomX;
 }
 
 
 function hitEnemy(bulletHit, enemy) {
-    // if (bulletHit.y > 1080 || bulletHit.y < 0 || bulletHit.x > 800 || bulletHit.x < 0) {
-    //     console.log('destroy')
-    //     bulletHit.destroy();
-    // }
+
     bulletHit.destroy();
     score += 1;
     scoreText.setText(score);
@@ -440,10 +430,6 @@ function resetRechargerPos(recharger) {
 
 
 function hitRecharger(charger, bulletHit) {
-    // if (bulletHit.y > 1080 || bulletHit.y < 0 || bulletHit.x > 800 || bulletHit.x < 0) {
-    //     console.log('destroy')
-    //     bulletHit.destroy();
-    // }
 
     bulletHit.destroy()
 
@@ -460,31 +446,8 @@ function hitRecharger(charger, bulletHit) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Ensures sprite speed doesnt exceed maxVelocity while update is called
-function constrainVelocity(sprite, maxVelocity) {
+function consVelocity(sprite, maxVelocity) {
     if (!sprite || !sprite.body)
         return;
 
@@ -505,9 +468,9 @@ function constrainVelocity(sprite, maxVelocity) {
 
 
 // Ensures reticle does not move offscreen
-function constrainReticle(reticle) {
-    var distX = reticle.x - player.x; // X distance between player & reticle
-    var distY = reticle.y - player.y; // Y distance between player & reticle
+function consReticle(reticle) {
+    var distX = reticle.x - player.x;
+    var distY = reticle.y - player.y;
 
     // Ensures reticle cannot be moved offscreen (player follow)
     if (distX > 800)
