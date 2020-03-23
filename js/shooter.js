@@ -38,7 +38,7 @@ var Bullet = new Phaser.Class({
     // Bullet Constructor
         function Bullet(scene) {
         Phaser.GameObjects.Image.call(this, scene, 0, 0, 'bullet');
-        this.speed = 1;
+        this.speed = 2.5;
         this.born = 0;
         this.direction = 0;
         this.xSpeed = 0;
@@ -66,6 +66,8 @@ var Bullet = new Phaser.Class({
 
     // Updates the position of the bullet each cycle
     update: function(time, delta) {
+        //this.speed += .1;
+        //   console.log(this.speed)
         this.x += this.xSpeed * delta;
         this.y += this.ySpeed * delta;
         this.born += delta;
@@ -78,17 +80,22 @@ var Bullet = new Phaser.Class({
 });
 
 var fallingAsteroid;
-var stars;
+var score = 0;
+var scoreText;
+var life = 100;
+var lifeText;
+var shield = 100;
+var shieldText;
 
 function preload() {
     // Load in images and sprites
     this.load.spritesheet('player', 'assets/images/tank.png', { frameWidth: 66, frameHeight: 60 }); // Made by tokkatrain: https://tokkatrain.itch.io/top-down-basic-set
     this.load.image('bullet', 'assets/images/bullet6.png');
     this.load.image('asteroid', 'assets/images/asteroid.png');
-    //  this.load.image('asteroid2', 'assets/images/asteroid2.png');
+    this.load.image('city', 'assets/images/city.png');
     this.load.image('target', 'assets/images/ball.png');
     this.load.image('background', 'assets/images/underwater1.png');
-    this.load.spritesheet('enemy', 'assets/images/tank.png', { frameWidth: 66, frameHeight: 60 }); // Made by tokkatrain: https://tokkatrain.itch.io/top-down-basic-set
+    this.load.spritesheet('shieldRecharge', 'assets/images/tank.png', { frameWidth: 66, frameHeight: 60 }); // Made by tokkatrain: https://tokkatrain.itch.io/top-down-basic-set
 }
 
 function create() {
@@ -101,13 +108,16 @@ function create() {
 
     // Add background player, enemy, reticle, healthpoint sprites
     var background = this.add.image(config.width / 2, config.height / 2, 'background');
-    player = this.physics.add.sprite(540, 570, 'player').setScale(2);
+    city = this.add.image(config.width / 2, config.height / 2, 'city');
+    player = this.physics.add.sprite(540, 570, 'player');
+    shieldRecharge = this.physics.add.sprite(-1000, 100, 'shieldRecharge');
+    enemy = this.physics.add.sprite(100, -100, 'asteroid').setScale(.2);
+    enemy2 = this.physics.add.sprite(200, -200, 'asteroid').setScale(.2);
+    enemy3 = this.physics.add.sprite(500, -300, 'asteroid').setScale(.2);
+    enemy4 = this.physics.add.sprite(900, -400, 'asteroid').setScale(.2);
+    enemy5 = this.physics.add.sprite(600, -500, 'asteroid').setScale(.2);
 
-    enemy = this.physics.add.sprite(540, 300, 'asteroid').setScale(.2);
-    enemy2 = this.physics.add.sprite(540, 300, 'asteroid').setScale(.2);
-    enemy3 = this.physics.add.sprite(540, 300, 'asteroid').setScale(.2);
-    enemy4 = this.physics.add.sprite(540, 300, 'asteroid').setScale(.2);
-    enemy5 = this.physics.add.sprite(540, 300, 'asteroid').setScale(.2);
+
 
     reticle = this.physics.add.sprite(540, 300, 'target');
     hp1 = this.add.image(-350, -250, 'target').setScrollFactor(0.5, 0.5);
@@ -139,6 +149,12 @@ function create() {
 
 
 
+
+
+    //this.physics.add.collider(city, bullet, cityHit, null, this);
+
+
+
     this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
     this.input.keyboard.on('keydown_SPACE', function(pointer, time, lastFired) {
@@ -149,6 +165,7 @@ function create() {
             bullet.fire(player, reticle);
             //  this.physics.add.collider(fallingAsteroid, bullet, enemyHitCallback);
             this.physics.add.collider(this.fallingAsteroid, bullet, hitEnemy);
+            this.physics.add.collider(shieldRecharge, bullet, hitRecharger);
         }
     }, this);
 
@@ -172,20 +189,42 @@ function create() {
         }
     }, this);
 
+
+    scoreText = this.add.text(20, 20, 'Score:' + score, {
+        fontSize: '20px',
+        fill: '#ffffff'
+    });
+
+
+    lifeText = this.add.text(20, 80, 'City Life:' + life + '%', {
+        fontSize: '20px',
+        fill: '#ffffff'
+    });
+
+    shieldText = this.add.text(20, 50, 'Shield Integrity:' + shield + '%', {
+        fontSize: '20px',
+        fill: '#ffffff'
+    });
 }
 
 
 function update(time, delta, stars) {
 
 
+    if (life == 00) {
+        alert('Game Over')
+    }
+    speeder = 1 + (1 * (1 * (time / 1000 / 30)));
+    //console.log(speeder)
     // Rotates player to face towards reticle
     player.rotation = Phaser.Math.Angle.Between(player.x, player.y, reticle.x, reticle.y);
-    moveShip(enemy, 1);
-    moveShip(enemy2, 2);
-    moveShip(enemy3, 3);
-    moveShip(enemy4, 2);
-    moveShip(enemy5, 2.5);
+    moveShip(enemy, speeder);
+    moveShip(enemy2, speeder);
+    moveShip(enemy3, speeder);
+    moveShip(enemy4, speeder);
+    moveShip(enemy5, 0);
 
+    moveRecharger(shieldRecharge, 1);
 
     //moveShip(enemy, 2);
 
@@ -201,62 +240,75 @@ function update(time, delta, stars) {
 
 }
 
+
+
+///////
 function moveShip(ship, speed) {
     ship.y += speed;
-    if (ship.y > config.height) {
+    if (ship.y > config.height - 40) {
+        if (shield > 0) {
+            shield -= 2;
+        } else if (shield <= 0) {
+            life -= 2;
+        }
+        lifeText.setText('City life:' + life + '%');
+        shieldText.setText('Shield Integrity:' + shield + '%');
         this.resetShipPos(ship);
     }
 }
 
 function resetShipPos(ship) {
-    console.log('new');
-
-    ship.y = 0;
-    var randomX = Phaser.Math.Between(0, config.width);
+    // console.log('new');
+    var randomY = Phaser.Math.Between(0, config.height - 700);
+    ship.y = randomY;
+    var randomX = Phaser.Math.Between(50, config.width - 50);
     ship.x = randomX;
 }
 
-function enemyHitCallback(enemyHit, bulletHit, ship) {
-
-    bulletHit.destroy();
-    //fallingAsteroid.setActive(false).setVisible(false);
-    console.log('hit')
-    enableEnemy();
-
-}
-
-function enableEnemy() {
-    console.log('active');
-    var randomY = Phaser.Math.Between(0, config.height - 700);
-    enemy.y = randomY;
-    var randomX = Phaser.Math.Between(0, config.width);
-    enemy.x = randomX;
-    enemy.setActive(true).setVisible(true);
-
-}
-
-
 function hitEnemy(bulletHit, enemy) {
-
-    //var explosion = new Explosion(this, enemy.x, enemy.y);
     bulletHit.destroy()
-        //  projectile.destroy();
+    score += 1;
+    scoreText.setText('Score:' + score);
     resetShipPos(enemy);
-    // this.score += 15;
+}
 
-    // var scoreFormated = this.zeroPad(this.score, 6);
-    // this.scoreLabel.text = "SCORE " + scoreFormated;
+//////////////////////////
 
-    // // 1.4 play sounds
-    // this.explosionSound.play();
+function moveRecharger(recharger, speed) {
+    recharger.x += speed;
+    if (recharger.y > config.height - 40) {
+        //  console.log('new recharge')
+        resetRechargerPos(recharger);
+    }
 }
 
 
+function resetRechargerPos(recharger) {
+    console.log('new recharge')
+
+    recharger.x = -1000;
+    var randomY = Phaser.Math.Between(50, config.height - 50);
+    recharger.y = randomY;
+}
+
+
+function hitRecharger(charger, bulletHit) {
+    bulletHit.destroy()
+
+    if (shield < 100)(
+        shield += 10
+    )
+
+    if (shield > 100) {
+        shield = 100;
+    }
 
 
 
-
-
+    shieldText.setText('Shield Integrity:' + shield + '%');
+    console.log('hit');
+    resetRechargerPos(charger);
+}
 
 
 
