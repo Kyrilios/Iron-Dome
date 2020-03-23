@@ -1,8 +1,3 @@
-var MyGame = {};
-
-MyGame.Boot = function() {};
-
-MyGame.Boot.prototype.constructor = MyGame.Boot;
 var config = {
     type: Phaser.AUTO,
     parent: 'phaser-example',
@@ -175,11 +170,11 @@ function create() {
 
     shieldRecharge = this.physics.add.sprite(-3500, 100, 'shieldRecharge').setScale(2);
 
-    enemy = this.physics.add.sprite(100, -3000, 'asteroid').setScale(.2);
-    enemy2 = this.physics.add.sprite(200, -3200, 'asteroid').setScale(.2);
-    enemy3 = this.physics.add.sprite(500, -3300, 'asteroid').setScale(.2);
-    enemy4 = this.physics.add.sprite(900, -3400, 'asteroid').setScale(.2);
-    enemy5 = this.physics.add.sprite(600, -3500, 'asteroid').setScale(.2);
+    enemy = this.physics.add.sprite(100, -1000, 'asteroid').setScale(.2);
+    enemy2 = this.physics.add.sprite(200, -1200, 'asteroid').setScale(.2);
+    enemy3 = this.physics.add.sprite(500, -1300, 'asteroid').setScale(.2);
+    enemy4 = this.physics.add.sprite(900, -1400, 'asteroid').setScale(.2);
+    enemy5 = this.physics.add.sprite(600, -1500, 'asteroid').setScale(.2);
 
     tBar = this.physics.add.sprite(540, 15, 'topBar');
 
@@ -354,16 +349,16 @@ function update(time, delta, stars) {
         gameOver.y -= 1;
         if (gameOver.y == config.height / 2) {
             //  this.bgm.stop();
-            endScoreText.y += 2;
-            gameOver.y += 2;
+            endScoreText.y += 1;
+            gameOver.y += 1;
             //   this.scene.stop();
         }
 
         //alert('Game Over')
     }
-    speeder = 1 + (1 * (1 * (time / 1000 / 30)));
-    //console.log(speeder)
-    // Rotates player to face towards reticle
+    speeder = 1 + (1 * (1 * (time / 1000 / 60)));
+    console.log(speeder)
+        // Rotates player to face towards reticle
     player.rotation = Phaser.Math.Angle.Between(player.x, player.y, reticle.x, reticle.y);
     moveShip(enemy, speeder);
     moveShip(enemy2, speeder);
